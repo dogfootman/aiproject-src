@@ -1,4 +1,5 @@
 // Menu Module - 메뉴 관리
-// 메뉴 등록, 순서 변경, 권한 설정
+// FR-006 ~ FR-010
 
 export * from './menu.types';
+export * from './menu.service';

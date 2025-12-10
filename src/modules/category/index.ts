@@ -1,4 +1,5 @@
 // Category Module - 카테고리 관리
-// 다단계 카테고리, 정렬, 활성화
+// FR-020 ~ FR-023
 
-export * from './category.types';
+export * from "./category.types";
+export * from "./category.service";
