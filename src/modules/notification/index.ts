@@ -1,4 +1,5 @@
 // Notification Module - 알림 관리
-// 푸시, 이메일, SMS, 알림 이력
+// FR-032 ~ FR-035
 
-export * from './notification.types';
+export * from "./notification.types";
+export * from "./notification.service";
