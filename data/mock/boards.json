@@ -1,0 +1,50 @@
+[
+  {
+    "id": "board-001",
+    "name": "공지사항",
+    "slug": "notice",
+    "description": "시스템 공지사항을 안내하는 게시판입니다.",
+    "type": "notice",
+    "config": {
+      "allowComments": false,
+      "allowAttachments": true,
+      "maxAttachmentSize": 10485760,
+      "allowedFileTypes": ["pdf", "doc", "docx", "xls", "xlsx"],
+      "requireApproval": false,
+      "postsPerPage": 10,
+      "permissions": {
+        "read": ["user", "admin"],
+        "write": ["admin"],
+        "delete": ["admin"],
+        "admin": ["admin"]
+      }
+    },
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "board-002",
+    "name": "자유게시판",
+    "slug": "free",
+    "description": "자유롭게 글을 작성할 수 있는 게시판입니다.",
+    "type": "general",
+    "config": {
+      "allowComments": true,
+      "allowAttachments": true,
+      "maxAttachmentSize": 5242880,
+      "allowedFileTypes": ["jpg", "jpeg", "png", "gif", "pdf"],
+      "requireApproval": false,
+      "postsPerPage": 20,
+      "permissions": {
+        "read": ["user", "admin"],
+        "write": ["user", "admin"],
+        "delete": ["admin"],
+        "admin": ["admin"]
+      }
+    },
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "menu-001",
+    "name": "대시보드",
+    "path": "/dashboard",
+    "icon": "home",
+    "order": 1,
+    "isActive": true,
+    "permissions": ["user", "admin"],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "menu-002",
+    "name": "사용자 관리",
+    "path": "/users",
+    "icon": "users",
+    "order": 2,
+    "isActive": true,
+    "permissions": ["admin"],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "menu-003",
+    "name": "게시판",
+    "path": "/boards",
+    "icon": "file-text",
+    "order": 3,
+    "isActive": true,
+    "permissions": ["user", "admin"],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "menu-004",
+    "name": "설정",
+    "path": "/settings",
+    "icon": "settings",
+    "order": 4,
+    "isActive": true,
+    "permissions": ["admin"],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

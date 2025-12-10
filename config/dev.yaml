@@ -1,0 +1,30 @@
+# Dev 환경 설정
+# 개발 및 테스트를 위한 설정
+
+stage: dev
+
+database:
+  type: postgresql
+  host: localhost
+  port: 5432
+  name: aiproject_dev
+  ssl: false
+
+logging:
+  level: debug
+  format: detailed
+  include_trace: true
+
+features:
+  auth_bypass: false
+  mock_delay: 0
+  debug_panel: true
+  hot_reload: true
+  maintenance_mode: false
+
+# 브랜치 전략:
+# main (protected)
+#   └── develop
+#         ├── feature/user-management
+#         ├── feature/notification-system
+#         └── bugfix/login-issue

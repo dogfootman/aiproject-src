@@ -1,0 +1,22 @@
+[
+  {
+    "id": "layout-001",
+    "name": "기본 레이아웃",
+    "description": "기본 사이드바 레이아웃",
+    "template": "sidebar",
+    "widgets": [],
+    "theme": {
+      "primaryColor": "#3b82f6",
+      "secondaryColor": "#64748b",
+      "backgroundColor": "#ffffff",
+      "textColor": "#1e293b",
+      "fontFamily": "Inter, sans-serif",
+      "borderRadius": "0.5rem",
+      "spacing": "1rem"
+    },
+    "isDefault": true,
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

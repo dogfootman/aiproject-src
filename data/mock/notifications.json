@@ -1,0 +1,12 @@
+[
+  {
+    "id": "notif-001",
+    "type": "in-app",
+    "title": "환영합니다",
+    "content": "AI Project에 오신 것을 환영합니다.",
+    "recipientId": "user-002",
+    "status": "delivered",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

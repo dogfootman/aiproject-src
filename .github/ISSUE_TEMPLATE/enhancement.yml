@@ -1,0 +1,72 @@
+name: Enhancement
+description: 기존 기능의 개선을 제안합니다
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        기능 개선 요청을 작성해주세요. 이 이슈는 자동으로 Doc Repo에 Spec 문서를 생성합니다.
+
+  - type: input
+    id: title
+    attributes:
+      label: 개선 제목
+      description: 개선 사항을 간단히 설명해주세요
+      placeholder: "예: 게시판 검색 성능 개선"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 현재 상태
+      description: 현재 기능이 어떻게 동작하는지 설명해주세요
+    validations:
+      required: true
+
+  - type: textarea
+    id: improvement
+    attributes:
+      label: 개선 내용
+      description: 어떻게 개선되어야 하는지 설명해주세요
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: 기대 효과
+      description: 이 개선으로 얻을 수 있는 효과를 설명해주세요
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 관련 모듈
+      options:
+        - auth (인증 관리)
+        - user (사용자 관리)
+        - menu (메뉴 관리)
+        - board (게시판 관리)
+        - category (카테고리 관리)
+        - common-code (공통코드 관리)
+        - layout (화면 레이아웃 관리)
+        - notification (알림 관리)
+        - settings (환경설정)
+        - performance (성능)
+        - other (기타)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - P1 (필수)
+        - P2 (중요)
+        - P3 (보통)
+        - P4 (낮음)
+    validations:
+      required: true

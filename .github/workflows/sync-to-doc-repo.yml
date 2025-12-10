@@ -1,0 +1,265 @@
+name: Sync Issue to Doc Repo
+
+on:
+  issues:
+    types: [opened, labeled]
+
+env:
+  DOC_REPO: dogfootman/aiproject-doc
+  SOURCE_REPO: ${{ github.repository }}
+
+jobs:
+  create-spec:
+    runs-on: ubuntu-latest
+    # bug, feature, enhancement 라벨이 있을 때만 실행
+    if: |
+      contains(github.event.issue.labels.*.name, 'bug') ||
+      contains(github.event.issue.labels.*.name, 'feature') ||
+      contains(github.event.issue.labels.*.name, 'enhancement')
+
+    steps:
+      - name: Checkout Doc Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DOC_REPO }}
+          token: ${{ secrets.DOC_REPO_TOKEN }}
+          path: doc-repo
+
+      - name: Determine Issue Type
+        id: issue-type
+        run: |
+          if [[ "${{ contains(github.event.issue.labels.*.name, 'bug') }}" == "true" ]]; then
+            echo "type=bug" >> $GITHUB_OUTPUT
+            echo "folder=bugs" >> $GITHUB_OUTPUT
+            echo "prefix=BUG" >> $GITHUB_OUTPUT
+          elif [[ "${{ contains(github.event.issue.labels.*.name, 'feature') }}" == "true" ]]; then
+            echo "type=feature" >> $GITHUB_OUTPUT
+            echo "folder=features" >> $GITHUB_OUTPUT
+            echo "prefix=FEAT" >> $GITHUB_OUTPUT
+          else
+            echo "type=enhancement" >> $GITHUB_OUTPUT
+            echo "folder=enhancements" >> $GITHUB_OUTPUT
+            echo "prefix=ENH" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract Module from Issue Body
+        id: module
+        run: |
+          BODY="${{ github.event.issue.body }}"
+          if [[ "$BODY" == *"auth"* ]]; then
+            echo "name=auth" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"user"* ]]; then
+            echo "name=user" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"menu"* ]]; then
+            echo "name=menu" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"board"* ]]; then
+            echo "name=board" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"category"* ]]; then
+            echo "name=category" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"common-code"* ]]; then
+            echo "name=common-code" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"layout"* ]]; then
+            echo "name=layout" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"notification"* ]]; then
+            echo "name=notification" >> $GITHUB_OUTPUT
+          elif [[ "$BODY" == *"settings"* ]]; then
+            echo "name=settings" >> $GITHUB_OUTPUT
+          else
+            echo "name=general" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Spec Document
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          TYPE="${{ steps.issue-type.outputs.type }}"
+          FOLDER="${{ steps.issue-type.outputs.folder }}"
+          PREFIX="${{ steps.issue-type.outputs.prefix }}"
+          MODULE="${{ steps.module.outputs.name }}"
+          TODAY=$(date +%Y-%m-%d)
+
+          # 파일명 생성 (특수문자 제거)
+          SAFE_TITLE=$(echo "$ISSUE_TITLE" | sed 's/[^a-zA-Z0-9가-힣 ]/-/g' | sed 's/  */-/g' | sed 's/--*/-/g' | head -c 50)
+          SPEC_FILE="doc-repo/specs/${FOLDER}/${PREFIX}-${ISSUE_NUMBER}-${SAFE_TITLE}.md"
+
+          # 디렉토리 생성
+          mkdir -p "doc-repo/specs/${FOLDER}"
+
+          # Spec 문서 생성
+          cat > "$SPEC_FILE" << EOF
+          # ${PREFIX}-${ISSUE_NUMBER}: ${ISSUE_TITLE}
+
+          ## 메타 정보
+
+          | 항목 | 내용 |
+          |------|------|
+          | **Source Issue** | [#${ISSUE_NUMBER}](${ISSUE_URL}) |
+          | **유형** | ${TYPE} |
+          | **모듈** | ${MODULE} |
+          | **상태** | 🔴 분석중 |
+          | **작성일** | ${TODAY} |
+          | **작성자** | @${ISSUE_AUTHOR} |
+
+          ---
+
+          ## 1. 개요
+
+          ### 1.1 원본 이슈 내용
+
+          ${ISSUE_BODY}
+
+          ---
+
+          ## 2. 분석
+
+          ### 2.1 현재 상태
+          <!-- 현재 동작 방식 또는 문제 상황 기술 -->
+
+          ### 2.2 원인 분석 (버그의 경우)
+          <!-- 버그 원인 분석 -->
+
+          ### 2.3 영향 범위
+          <!-- 영향받는 기능, 모듈, 화면 등 -->
+
+          ---
+
+          ## 3. 해결 방안
+
+          ### 3.1 제안 방안
+          <!-- 해결/구현 방안 기술 -->
+
+          ### 3.2 대안
+          <!-- 대안이 있다면 기술 -->
+
+          ---
+
+          ## 4. 상세 설계
+
+          ### 4.1 API 변경사항
+          <!-- API 변경이 필요한 경우 -->
+
+          \`\`\`
+          [Method] /api/endpoint
+          Request: { }
+          Response: { }
+          \`\`\`
+
+          ### 4.2 DB 변경사항
+          <!-- DB 스키마 변경이 필요한 경우 -->
+
+          ### 4.3 UI 변경사항
+          <!-- UI 변경이 필요한 경우 -->
+
+          ---
+
+          ## 5. 테스트 계획
+
+          ### 5.1 테스트 케이스
+          - [ ] 케이스 1
+          - [ ] 케이스 2
+
+          ---
+
+          ## 6. 체크리스트
+
+          - [ ] 분석 완료
+          - [ ] 설계 완료
+          - [ ] 리뷰 완료
+          - [ ] Source Repo 구현 시작 알림
+          EOF
+
+          # 들여쓰기 제거
+          sed -i 's/^          //' "$SPEC_FILE"
+
+          echo "SPEC_FILE=$SPEC_FILE" >> $GITHUB_ENV
+          echo "SPEC_PATH=specs/${FOLDER}/${PREFIX}-${ISSUE_NUMBER}-${SAFE_TITLE}.md" >> $GITHUB_ENV
+
+      - name: Commit and Push to Doc Repo
+        working-directory: doc-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "docs: Add spec for ${{ env.SOURCE_REPO }}#${{ github.event.issue.number }}
+
+          - Type: ${{ steps.issue-type.outputs.type }}
+          - Module: ${{ steps.module.outputs.name }}
+          - Source: ${{ github.event.issue.html_url }}"
+          git push
+
+      - name: Create Issue in Doc Repo
+        uses: actions/github-script@v7
+        id: create-doc-issue
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const issue = await github.rest.issues.create({
+              owner,
+              repo,
+              title: `[SPEC] ${{ github.event.issue.title }}`,
+              body: `## 연결된 Source Issue
+
+            - **Source**: ${{ github.event.issue.html_url }}
+            - **Spec 문서**: \`${{ env.SPEC_PATH }}\`
+
+            ## 할 일
+
+            - [ ] Spec 문서 분석 내용 작성
+            - [ ] 해결 방안 설계
+            - [ ] 리뷰 요청
+            - [ ] Source Repo에 구현 시작 알림
+
+            ---
+
+            ### 원본 이슈 내용
+
+            ${{ github.event.issue.body }}
+            `,
+              labels: ['spec', '${{ steps.issue-type.outputs.type }}']
+            });
+
+            core.setOutput('doc_issue_number', issue.data.number);
+            core.setOutput('doc_issue_url', issue.data.html_url);
+
+      - name: Comment on Source Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 📋 Spec 문서가 생성되었습니다
+
+            Doc Repo에 Spec 문서가 자동 생성되었습니다.
+
+            - **Spec 문서**: \`${{ env.SPEC_PATH }}\`
+            - **Doc Issue**: ${{ steps.create-doc-issue.outputs.doc_issue_url }}
+
+            ### 다음 단계
+
+            1. Doc Repo에서 Spec 문서 작성 완료
+            2. Spec 리뷰 및 승인
+            3. 이 이슈에 \`ready-to-implement\` 라벨 추가됨
+            4. 구현 시작
+
+            ---
+            🤖 *이 코멘트는 자동으로 생성되었습니다.*
+            `
+            });
+
+      - name: Add spec-pending label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['spec-pending']
+            });

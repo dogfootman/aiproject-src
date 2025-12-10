@@ -1,0 +1,82 @@
+[
+  {
+    "id": "group-001",
+    "code": "USER_STATUS",
+    "name": "사용자 상태",
+    "isActive": true,
+    "codes": [
+      {
+        "id": "code-001",
+        "groupId": "group-001",
+        "code": "ACTIVE",
+        "name": "활성",
+        "value": "active",
+        "order": 1,
+        "isActive": true,
+        "labels": { "ko": "활성", "en": "Active" }
+      },
+      {
+        "id": "code-002",
+        "groupId": "group-001",
+        "code": "INACTIVE",
+        "name": "비활성",
+        "value": "inactive",
+        "order": 2,
+        "isActive": true,
+        "labels": { "ko": "비활성", "en": "Inactive" }
+      },
+      {
+        "id": "code-003",
+        "groupId": "group-001",
+        "code": "PENDING",
+        "name": "대기",
+        "value": "pending",
+        "order": 3,
+        "isActive": true,
+        "labels": { "ko": "대기", "en": "Pending" }
+      }
+    ],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "group-002",
+    "code": "BOARD_TYPE",
+    "name": "게시판 유형",
+    "isActive": true,
+    "codes": [
+      {
+        "id": "code-004",
+        "groupId": "group-002",
+        "code": "GENERAL",
+        "name": "일반",
+        "value": "general",
+        "order": 1,
+        "isActive": true,
+        "labels": { "ko": "일반", "en": "General" }
+      },
+      {
+        "id": "code-005",
+        "groupId": "group-002",
+        "code": "NOTICE",
+        "name": "공지",
+        "value": "notice",
+        "order": 2,
+        "isActive": true,
+        "labels": { "ko": "공지", "en": "Notice" }
+      },
+      {
+        "id": "code-006",
+        "groupId": "group-002",
+        "code": "QNA",
+        "name": "Q&A",
+        "value": "qna",
+        "order": 3,
+        "isActive": true,
+        "labels": { "ko": "Q&A", "en": "Q&A" }
+      }
+    ],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

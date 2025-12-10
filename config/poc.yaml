@@ -1,0 +1,23 @@
+# PoC 환경 설정
+# 빠른 프로토타이핑을 위한 설정
+
+stage: poc
+
+database:
+  type: file          # file | mock | memory
+  path: ./data/mock
+
+logging:
+  level: info
+  format: simple
+
+features:
+  auth_bypass: true   # 인증 우회 가능
+  mock_delay: 500     # 실제 환경 시뮬레이션 (ms)
+  debug_panel: true
+  hot_reload: true
+
+# 특징:
+# - 모든 데이터는 JSON 파일 또는 메모리 기반
+# - 빠른 프로토타이핑 가능
+# - 외부 의존성 없음

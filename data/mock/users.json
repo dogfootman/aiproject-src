@@ -1,0 +1,18 @@
+[
+  {
+    "id": "user-001",
+    "email": "admin@example.com",
+    "name": "관리자",
+    "role": "admin",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "user-002",
+    "email": "user@example.com",
+    "name": "일반 사용자",
+    "role": "user",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]

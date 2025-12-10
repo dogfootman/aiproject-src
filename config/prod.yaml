@@ -1,0 +1,27 @@
+# Production 환경 설정
+# 운영 서버를 위한 설정
+
+stage: production
+
+database:
+  type: postgresql
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  ssl: required
+
+logging:
+  level: warn
+  format: json
+  external: true      # 외부 로깅 시스템 연동
+
+features:
+  auth_bypass: false
+  debug_panel: false
+  hot_reload: false
+  maintenance_mode: false
+
+# 특징:
+# - main 브랜치만 배포 가능
+# - 소스 수정 불가 (설정만 변경 가능)
+# - 환경 변수 기반 설정

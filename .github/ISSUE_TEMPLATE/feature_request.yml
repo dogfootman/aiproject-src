@@ -1,0 +1,73 @@
+name: Feature Request
+description: 새로운 기능을 제안합니다
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        새 기능 요청을 작성해주세요. 이 이슈는 자동으로 Doc Repo에 Spec 문서를 생성합니다.
+
+  - type: input
+    id: title
+    attributes:
+      label: 기능 제목
+      description: 기능을 간단히 설명해주세요
+      placeholder: "예: 소셜 로그인 추가"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 기능 설명
+      description: 원하는 기능을 상세히 설명해주세요
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: 사용 사례
+      description: 이 기능이 필요한 상황을 설명해주세요
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 수락 기준
+      description: 이 기능이 완료되었다고 판단할 수 있는 기준을 설명해주세요
+      placeholder: |
+        - 사용자가 Google 계정으로 로그인할 수 있다
+        - 기존 계정과 연동이 가능하다
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 관련 모듈
+      options:
+        - auth (인증 관리)
+        - user (사용자 관리)
+        - menu (메뉴 관리)
+        - board (게시판 관리)
+        - category (카테고리 관리)
+        - common-code (공통코드 관리)
+        - layout (화면 레이아웃 관리)
+        - notification (알림 관리)
+        - settings (환경설정)
+        - new-module (신규 모듈)
+        - other (기타)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      options:
+        - P1 (필수)
+        - P2 (중요)
+        - P3 (보통)
+        - P4 (낮음)
+    validations:
+      required: true
