@@ -1,0 +1,338 @@
+# ============================================================================
+# Source Repo → Doc Repo 상태 동기화 워크플로우
+# ============================================================================
+# 이 파일을 Source Repo의 .github/workflows/sync-to-doc-repo.yml에 복사하세요.
+#
+# 필요한 Secret:
+# - DOC_REPO_TOKEN: Doc Repo 접근 권한이 있는 PAT
+# ============================================================================
+
+name: Sync Source Status to Doc Repo
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [closed]
+
+env:
+  DOC_REPO: dogfootman/aiproject-doc
+
+jobs:
+  # =========================================================================
+  # 자동화 B: Source in-progress → Doc impl-started
+  # =========================================================================
+  impl-started-notify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.label.name == 'in-progress'
+
+    steps:
+      - name: Find Doc Issue
+        id: find-doc
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const sourceIssueNumber = context.issue.number;
+            const sourceRepo = context.repo.repo;
+
+            // Doc Repo에서 Source Issue 번호로 연결된 이슈 찾기
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'spec-complete'
+            });
+
+            const docIssue = issues.find(issue =>
+              issue.body && (
+                issue.body.includes(`${sourceRepo}#${sourceIssueNumber}`) ||
+                issue.body.includes(`${sourceRepo}/issues/${sourceIssueNumber}`)
+              )
+            );
+
+            if (docIssue) {
+              core.setOutput('doc_issue_number', docIssue.number);
+              console.log(`Found doc issue #${docIssue.number}`);
+            } else {
+              console.log('No matching doc issue found');
+              core.setOutput('doc_issue_number', '');
+            }
+
+      - name: Update Doc Issue
+        if: steps.find-doc.outputs.doc_issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const docIssueNumber = ${{ steps.find-doc.outputs.doc_issue_number }};
+            const sourceIssueUrl = '${{ github.event.issue.html_url }}';
+
+            // spec-complete 라벨 제거
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: docIssueNumber,
+                name: 'spec-complete'
+              });
+            } catch (e) {
+              console.log('spec-complete label not found');
+            }
+
+            // impl-started 라벨 추가
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: docIssueNumber,
+              labels: ['impl-started']
+            });
+
+            // 코멘트 추가
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: docIssueNumber,
+              body: `## 🚀 구현 시작됨
+
+Source Repo에서 구현이 시작되었습니다.
+
+- **Source Issue**: ${sourceIssueUrl}
+
+### 상태 변경
+- \`spec-complete\` → \`impl-started\`
+
+---
+🤖 *자동 생성됨*`
+            });
+
+  # =========================================================================
+  # 자동화 C: Source PR 머지 → Source dev-complete, Doc impl-complete
+  # =========================================================================
+  pr-merged-notify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+
+    steps:
+      - name: Extract Issue Number from PR
+        id: extract
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          # Closes #N, Fixes #N, Resolves #N 형식에서 이슈 번호 추출
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oiE '(closes|fixes|resolves)\s*#[0-9]+' | grep -oE '[0-9]+' | head -1)
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found issue number: $ISSUE_NUMBER"
+
+      - name: Update Source Issue Labels
+        if: steps.extract.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ steps.extract.outputs.issue_number }};
+
+            // in-progress 라벨 제거
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'in-progress'
+              });
+            } catch (e) {
+              console.log('in-progress label not found');
+            }
+
+            // dev-complete 라벨 추가
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['dev-complete']
+            });
+
+            // 코멘트 추가
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `## ✅ 구현 완료
+
+PR이 머지되어 구현이 완료되었습니다.
+
+- **PR**: ${{ github.event.pull_request.html_url }}
+
+### 상태 변경
+- \`in-progress\` → \`dev-complete\`
+
+### 다음 단계
+- 테스트 완료 후 \`test-complete\` 라벨 추가
+
+---
+🤖 *자동 생성됨*`
+            });
+
+      - name: Find and Update Doc Issue
+        if: steps.extract.outputs.issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const sourceIssueNumber = ${{ steps.extract.outputs.issue_number }};
+            const sourceRepo = context.repo.repo;
+            const prUrl = '${{ github.event.pull_request.html_url }}';
+
+            // Doc Repo에서 연결된 이슈 찾기
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'impl-started'
+            });
+
+            const docIssue = issues.find(issue =>
+              issue.body && (
+                issue.body.includes(`${sourceRepo}#${sourceIssueNumber}`) ||
+                issue.body.includes(`${sourceRepo}/issues/${sourceIssueNumber}`)
+              )
+            );
+
+            if (docIssue) {
+              // impl-started 라벨 제거
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: docIssue.number,
+                  name: 'impl-started'
+                });
+              } catch (e) {
+                console.log('impl-started label not found');
+              }
+
+              // impl-complete 라벨 추가
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: docIssue.number,
+                labels: ['impl-complete']
+              });
+
+              // 코멘트 추가
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: docIssue.number,
+                body: `## ✅ 구현 완료
+
+Source Repo에서 PR이 머지되어 구현이 완료되었습니다.
+
+- **PR**: ${prUrl}
+
+### 상태 변경
+- \`impl-started\` → \`impl-complete\`
+
+---
+🤖 *자동 생성됨*`
+              });
+
+              console.log(`Updated doc issue #${docIssue.number}`);
+            } else {
+              console.log('No matching doc issue found');
+            }
+
+  # =========================================================================
+  # 자동화 D: Source test-complete → Doc verified
+  # =========================================================================
+  test-complete-notify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.label.name == 'test-complete'
+
+    steps:
+      - name: Find Doc Issue
+        id: find-doc
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const sourceIssueNumber = context.issue.number;
+            const sourceRepo = context.repo.repo;
+
+            // Doc Repo에서 연결된 이슈 찾기
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'impl-complete'
+            });
+
+            const docIssue = issues.find(issue =>
+              issue.body && (
+                issue.body.includes(`${sourceRepo}#${sourceIssueNumber}`) ||
+                issue.body.includes(`${sourceRepo}/issues/${sourceIssueNumber}`)
+              )
+            );
+
+            if (docIssue) {
+              core.setOutput('doc_issue_number', docIssue.number);
+              console.log(`Found doc issue #${docIssue.number}`);
+            } else {
+              console.log('No matching doc issue found');
+              core.setOutput('doc_issue_number', '');
+            }
+
+      - name: Update Doc Issue
+        if: steps.find-doc.outputs.doc_issue_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DOC_REPO_TOKEN }}
+          script: |
+            const [owner, repo] = process.env.DOC_REPO.split('/');
+            const docIssueNumber = ${{ steps.find-doc.outputs.doc_issue_number }};
+            const sourceIssueUrl = '${{ github.event.issue.html_url }}';
+
+            // impl-complete 라벨 제거
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: docIssueNumber,
+                name: 'impl-complete'
+              });
+            } catch (e) {
+              console.log('impl-complete label not found');
+            }
+
+            // verified 라벨 추가
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: docIssueNumber,
+              labels: ['verified']
+            });
+
+            // 코멘트 추가
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: docIssueNumber,
+              body: `## ✅ 테스트 완료 & 검증됨
+
+Source Repo에서 테스트가 완료되어 검증되었습니다.
+
+- **Source Issue**: ${sourceIssueUrl}
+
+### 상태 변경
+- \`impl-complete\` → \`verified\`
+
+### 다음 단계
+- Source Issue 종료 후 이 이슈도 종료
+
+---
+🤖 *자동 생성됨*`
+            });
+
+            console.log(`Updated doc issue #${docIssueNumber} with verified label`);
